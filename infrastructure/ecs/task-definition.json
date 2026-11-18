@@ -1,0 +1,49 @@
+{
+  "family": "devops-graphql-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "graphql-server",
+      "image": "<ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/devops-graphql-backend:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 4000,
+          "hostPort": 4000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "PORT", "value": "4000" },
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "USE_LAMBDA", "value": "true" },
+        { "name": "AWS_REGION", "value": "ap-south-1" },
+        { "name": "LAMBDA_CREATE_EMPLOYEE", "value": "createEmployee" },
+        { "name": "LAMBDA_GET_EMPLOYEES", "value": "getEmployees" },
+        { "name": "LAMBDA_GET_EMPLOYEE", "value": "getEmployee" },
+        { "name": "LAMBDA_UPDATE_EMPLOYEE", "value": "updateEmployee" },
+        { "name": "LAMBDA_DELETE_EMPLOYEE", "value": "deleteEmployee" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/devops-graphql-backend",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:4000/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 15
+      }
+    }
+  ]
+}

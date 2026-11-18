@@ -1,0 +1,82 @@
+[
+  {
+    "AlarmName": "devops-lambda-high-error-rate",
+    "MetricName": "Errors",
+    "Namespace": "AWS/Lambda",
+    "Statistic": "Sum",
+    "Period": 300,
+    "EvaluationPeriods": 1,
+    "Threshold": 1.0,
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "AlarmDescription": "Triggers when any Lambda function experiences 1 or more errors in 5 minutes"
+  },
+  {
+    "AlarmName": "devops-lambda-duration-anomaly",
+    "MetricName": "Duration",
+    "Namespace": "AWS/Lambda",
+    "Statistic": "Average",
+    "Period": 300,
+    "EvaluationPeriods": 2,
+    "Threshold": 3000.0,
+    "ComparisonOperator": "GreaterThanThreshold",
+    "AlarmDescription": "Triggers when average Lambda duration exceeds 3000ms (potential database latency issue)"
+  },
+  {
+    "AlarmName": "devops-ecs-cpu-high",
+    "MetricName": "CPUUtilization",
+    "Namespace": "AWS/ECS",
+    "Dimensions": [
+      { "Name": "ClusterName", "Value": "devops-ecs-cluster" },
+      { "Name": "ServiceName", "Value": "devops-graphql-backend-service" }
+    ],
+    "Statistic": "Average",
+    "Period": 300,
+    "EvaluationPeriods": 2,
+    "Threshold": 80.0,
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "AlarmDescription": "Triggers when ECS container CPU exceeds 80% for two consecutive 5-minute periods"
+  },
+  {
+    "AlarmName": "devops-ecs-memory-high",
+    "MetricName": "MemoryUtilization",
+    "Namespace": "AWS/ECS",
+    "Dimensions": [
+      { "Name": "ClusterName", "Value": "devops-ecs-cluster" },
+      { "Name": "ServiceName", "Value": "devops-graphql-backend-service" }
+    ],
+    "Statistic": "Average",
+    "Period": 300,
+    "EvaluationPeriods": 2,
+    "Threshold": 80.0,
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "AlarmDescription": "Triggers when ECS container memory exceeds 80% for two consecutive periods"
+  },
+  {
+    "AlarmName": "devops-rds-cpu-high",
+    "MetricName": "CPUUtilization",
+    "Namespace": "AWS/RDS",
+    "Dimensions": [
+      { "Name": "DBInstanceIdentifier", "Value": "devops-employee-rds" }
+    ],
+    "Statistic": "Average",
+    "Period": 300,
+    "EvaluationPeriods": 2,
+    "Threshold": 85.0,
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "AlarmDescription": "Triggers when RDS PostgreSQL CPU utilization exceeds 85%"
+  },
+  {
+    "AlarmName": "devops-rds-high-database-connections",
+    "MetricName": "DatabaseConnections",
+    "Namespace": "AWS/RDS",
+    "Dimensions": [
+      { "Name": "DBInstanceIdentifier", "Value": "devops-employee-rds" }
+    ],
+    "Statistic": "Average",
+    "Period": 300,
+    "EvaluationPeriods": 1,
+    "Threshold": 80.0,
+    "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+    "AlarmDescription": "Triggers when active database connections approach RDS connection limit"
+  }
+]

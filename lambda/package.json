@@ -1,0 +1,20 @@
+{
+  "name": "devops-assessment-lambdas",
+  "version": "1.0.0",
+  "description": "AWS Lambda functions for GraphQL Serverless architecture",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.700.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/pg": "^8.11.10",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.2"
+  }
+}

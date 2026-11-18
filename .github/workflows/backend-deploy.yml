@@ -1,0 +1,154 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'lambda/**'
+      - '.github/workflows/backend-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Required for GitHub OIDC authentication
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+
+jobs:
+  # ----------------------------------------------------------------------------
+  # Job 1: Build & Deploy Lambda Functions
+  # ----------------------------------------------------------------------------
+  deploy-lambdas:
+    name: Build & Deploy AWS Lambda Functions
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 2. Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: lambda/package.json
+
+      - name: 3. Install Lambda dependencies
+        working-directory: lambda
+        run: npm ci
+
+      - name: 4. Typecheck Lambdas
+        working-directory: lambda
+        run: npm run typecheck
+
+      - name: 5. Bundle Lambda functions
+        working-directory: lambda
+        run: npm run build
+
+      - name: 6. Configure AWS Credentials via GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions-LambdaDeploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 7. Package and Update Lambda Functions
+        run: |
+          FUNCTIONS=("createEmployee" "getEmployees" "getEmployee" "updateEmployee" "deleteEmployee")
+
+          for FN in "${FUNCTIONS[@]}"; do
+            echo "📦 Packaging $FN..."
+            cd lambda/dist/$FN
+            zip -j ../../../$FN.zip index.js
+            cd ../../..
+
+            echo "🚀 Updating Lambda code for $FN..."
+            aws lambda update-function-code \
+              --function-name $FN \
+              --zip-file fileb://$FN.zip \
+              --publish
+          done
+
+  # ----------------------------------------------------------------------------
+  # Job 2: Build & Deploy ECS Fargate Backend Container
+  # ----------------------------------------------------------------------------
+  deploy-ecs:
+    name: Build & Deploy ECS Fargate GraphQL Server
+    runs-on: ubuntu-latest
+    needs: [deploy-lambdas]
+    steps:
+      - name: 1. Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 2. Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: backend/package.json
+
+      - name: 3. Install Backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: 4. Typecheck Backend
+        working-directory: backend
+        run: npm run typecheck
+
+      - name: 5. Configure AWS Credentials via GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: GitHubActions-ECSDeploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 6. Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 7. Build, Tag, and Push Docker Image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "Building Docker image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./backend
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: 8. Update Amazon ECS Fargate Service
+        run: |
+          echo "Triggering new deployment for ECS Service: ${{ secrets.ECS_SERVICE_NAME }} in Cluster: ${{ secrets.ECS_CLUSTER_NAME }}"
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --service ${{ secrets.ECS_SERVICE_NAME }} \
+            --force-new-deployment
+
+      - name: 9. Wait for ECS Service Steady State
+        run: |
+          echo "Waiting for ECS service to reach steady state..."
+          aws ecs wait services-stable \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --services ${{ secrets.ECS_SERVICE_NAME }}
+          echo "✅ ECS Fargate service update succeeded and is stable!"
+
+      - name: 10. Automated Rollback Trigger on Failure
+        if: failure()
+        run: |
+          echo "::error::ECS Deployment failed! Triggering rollback to previous stable task definition..."
+          PREV_TASK_DEF=$(aws ecs describe-services \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+            --services ${{ secrets.ECS_SERVICE_NAME }} \
+            --query "services[0].deployments[?status=='ACTIVE'].taskDefinition" \
+            --output text | head -n 1)
+
+          if [ -n "$PREV_TASK_DEF" ]; then
+            echo "Rolling back ECS service to: $PREV_TASK_DEF"
+            aws ecs update-service \
+              --cluster ${{ secrets.ECS_CLUSTER_NAME }} \
+              --service ${{ secrets.ECS_SERVICE_NAME }} \
+              --task-definition "$PREV_TASK_DEF"
+          fi

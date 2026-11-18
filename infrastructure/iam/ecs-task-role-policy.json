@@ -1,0 +1,31 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowLambdaInvocation",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:InvokeFunction"
+      ],
+      "Resource": [
+        "arn:aws:lambda:*:*:function:createEmployee",
+        "arn:aws:lambda:*:*:function:getEmployees",
+        "arn:aws:lambda:*:*:function:getEmployee",
+        "arn:aws:lambda:*:*:function:updateEmployee",
+        "arn:aws:lambda:*:*:function:deleteEmployee",
+        "arn:aws:lambda:*:*:function:initDatabase"
+      ]
+    },
+    {
+      "Sid": "AllowCloudWatchMetricsAndLogs",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricData",
+        "logs:DescribeLogStreams",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
