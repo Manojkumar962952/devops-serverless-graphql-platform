@@ -170,4 +170,3 @@ docker compose up --build
 - [CloudWatch Monitoring, Metrics & Alarms](docs/monitoring.md)
 - [Automated & Manual Rollback Strategies](docs/rollback.md)
 - [AWS Resource Cleanup & Cost Optimization Guide](docs/cleanup.md)
-- [DevOps Assessment Interview Questions & Answers](docs/interview-qa.md)
