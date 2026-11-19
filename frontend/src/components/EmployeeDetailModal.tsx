@@ -42,16 +42,17 @@ export const EmployeeDetailModal: React.FC<EmployeeDetailModalProps> = ({
           >
             <div
               style={{
-                width: '56px',
-                height: '56px',
+                width: '60px',
+                height: '60px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                color: '#60a5fa',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
+                color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '1.25rem',
+                fontWeight: 800,
+                fontSize: '1.35rem',
+                boxShadow: '0 4px 15px rgba(79, 70, 229, 0.4)',
               }}
             >
               {employee.firstName[0]}

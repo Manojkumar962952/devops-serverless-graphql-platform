@@ -5,14 +5,16 @@ interface StatsCardProps {
   value: string | number;
   icon: React.ReactNode;
   iconBg: string;
+  subtitle?: string;
 }
 
-export const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, iconBg }) => {
+export const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, iconBg, subtitle }) => {
   return (
     <div className="stat-card">
       <div>
         <div className="stat-title">{title}</div>
         <div className="stat-value">{value}</div>
+        {subtitle && <div className="stat-subtitle">{subtitle}</div>}
       </div>
       <div className="stat-icon-wrapper" style={{ backgroundColor: iconBg }}>
         {icon}

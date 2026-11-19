@@ -233,24 +233,28 @@ export const App: React.FC = () => {
           <StatsCard
             title="Total Employees"
             value={totalCount}
+            subtitle="Synced with PostgreSQL"
             icon={<Users size={24} color="#3b82f6" />}
             iconBg="rgba(59, 130, 246, 0.15)"
           />
           <StatsCard
             title="Active Workforce"
             value={activeCount}
+            subtitle={`${totalCount > 0 ? Math.round((activeCount / totalCount) * 100) : 0}% active status`}
             icon={<UserCheck size={24} color="#10b981" />}
             iconBg="rgba(16, 185, 129, 0.15)"
           />
           <StatsCard
             title="Active Departments"
             value={departmentsCount}
+            subtitle="Cross-functional units"
             icon={<Building2 size={24} color="#8b5cf6" />}
             iconBg="rgba(139, 92, 246, 0.15)"
           />
           <StatsCard
             title="Average Salary"
             value={`$${avgSalary.toLocaleString()}`}
+            subtitle="Live SQL calculation"
             icon={<DollarSign size={24} color="#f59e0b" />}
             iconBg="rgba(245, 158, 11, 0.15)"
           />
@@ -265,6 +269,32 @@ export const App: React.FC = () => {
           onDelete={(emp) => setDeletingEmployee(emp)}
         />
       </main>
+
+      {/* Modern Architecture Footer */}
+      <footer
+        style={{
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: 'rgba(9, 13, 22, 0.85)',
+          padding: '1.5rem',
+          textAlign: 'center',
+          fontSize: '0.8125rem',
+          color: '#64748b',
+        }}
+      >
+        <div style={{ maxWidth: '1320px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+          <div>
+            <span style={{ fontWeight: 600, color: '#94a3b8' }}>CloudOps Employee Portal</span> • Powered by AWS Serverless GraphQL
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <span style={{ color: '#475569' }}>Pipeline:</span>
+            <span style={{ color: '#06b6d4' }}>CloudFront</span> →
+            <span style={{ color: '#818cf8' }}>API Gateway</span> →
+            <span style={{ color: '#f59e0b' }}>ECS Fargate</span> →
+            <span style={{ color: '#eab308' }}>Lambda</span> →
+            <span style={{ color: '#3b82f6' }}>PostgreSQL</span>
+          </div>
+        </div>
+      </footer>
 
       {/* Modals */}
       <EmployeeModal

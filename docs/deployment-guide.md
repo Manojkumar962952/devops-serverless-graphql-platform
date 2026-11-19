@@ -194,8 +194,8 @@ Create 4 least-privilege security groups under VPC -> **Security Groups**:
   - **DB instance identifier:** `devops-employee-rds`
   - **Master username:** `postgres`
   - **Credentials management:** Select **Self managed**
-  - **Master password:** `P@ssw0rdDevOps2026!` *(or your preferred password — note it down for Secrets Manager!)*
-  - **Confirm master password:** `P@ssw0rdDevOps2026!`
+  - **Master password:** Enter a strong password (e.g., `P@ssw0rd<YOUR_NAME>2026!`) *(note it down for Secrets Manager!)*
+  - **Confirm master password:** Re-enter your password
 - **STEP 7:** Instance configuration:
   - **DB instance class:** Select **Burstable classes (includes t classes)** -> Select **`db.t4g.micro`** or **`db.t3.micro`** (2 vCPUs, 1 GiB RAM).
 - **STEP 8:** Storage:
@@ -240,7 +240,7 @@ Now that your RDS instance exists, you can store the database credentials secure
 - **STEP 3:** Secret type: Select **Credentials for Amazon RDS database**.
 - **STEP 4:** Enter Credentials:
   - **User name:** `postgres`
-  - **Password:** Enter the master password you set in RDS (e.g., `P@ssw0rdDevOps2026!`).
+  - **Password:** Enter the master password you set in RDS.
   - **Encryption key:** `aws/secretsmanager` (default).
 - **STEP 5:** Database:
   - Under *Select the Amazon RDS database that this secret will access*, you will now see **`devops-employee-rds`** listed! Select it.
