@@ -87,12 +87,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: backend/package.json
 
       - name: 3. Install Backend dependencies
         working-directory: backend
-        run: npm ci
+        run: npm install
 
       - name: 4. Typecheck Backend
         working-directory: backend
