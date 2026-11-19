@@ -694,3 +694,26 @@ This section documents real-world production errors encountered during the imple
   1. Updated `frontend/src/apollo/client.ts` to make WebSocket subscriptions conditional: it only instantiates `GraphQLWsLink` if `VITE_GRAPHQL_WS_URL` is explicitly set to a dedicated WebSocket gateway.
   2. In `frontend/src/App.tsx`, added `skip: !isWsEnabled` on `useSubscription` hooks to avoid connection attempts when running behind standard HTTP API.
   3. All GraphQL CRUD operations (`GET_EMPLOYEES`, `CREATE_EMPLOYEE`, `UPDATE_EMPLOYEE`, `DELETE_EMPLOYEE`) execute reliably over HTTPS with automatic UI cache updates.
+
+### Issue 11: GitHub Actions OIDC Authentication Failed (`sts:AssumeRoleWithWebIdentity` AccessDenied)
+- **Error:** `Could not assume role with OIDC: Not authorized to perform sts:AssumeRoleWithWebIdentity`.
+- **Root Cause:** When configuring GitHub Actions OIDC through the AWS Console, AWS binds the repository using immutable GitHub internal IDs. CloudTrail inspection revealed that GitHub Actions passed:
+  `userName: repo:Manojkumar962952@126284997/devops-serverless-graphql-platform@1463040510:ref:refs/heads/master`.
+  Because the IAM Trust Policy was looking for `repo:Manojkumar962952/devops-serverless-graphql-platform:*` without the `@126284997` and `@1463040510` account IDs, AWS STS rejected the token.
+- **Resolution:** Updated the IAM Role Trust Policy condition to use `StringLike` with:
+  `repo:Manojkumar962952@126284997/devops-serverless-graphql-platform@1463040510:*` and `repo:*devops-serverless-graphql-platform:*`.
+
+### Issue 12: S3 Sync Permission Denied on `s3:ListBucket`
+- **Error:** `fatal error: An error occurred (AccessDenied) when calling the ListObjectsV2 operation: User: ... is not authorized to perform: s3:ListBucket on resource: "arn:aws:s3:::***"`.
+- **Root Cause:** The IAM inline policy `GitHubActionsDeployPolicy` allowed actions on `devops-frontend-977527528431`, but the actual S3 bucket created in AWS was named `devops-frontend-hr-portal-2026`.
+- **Resolution:** Updated `GitHubActionsDeployPolicy` to grant `s3:PutObject`, `s3:GetObject`, `s3:ListBucket`, and `s3:DeleteObject` on `arn:aws:s3:::devops-frontend-hr-portal-2026` and `arn:aws:s3:::devops-frontend-*`.
+
+### Issue 13: Backend CI/CD Failure Due to Missing `package-lock.json` (`npm ci`)
+- **Error:** Step 3 `Install Backend dependencies` failed in GitHub Actions.
+- **Root Cause:** The workflow ran `npm ci`. Unlike `npm install`, `npm ci` strictly requires an existing `package-lock.json`. Because `backend/package-lock.json` was omitted from the repository, `npm ci` crashed.
+- **Resolution:** Replaced `npm ci` with `npm install` in `.github/workflows/backend-deploy.yml`.
+
+### Issue 14: AWS IAM OIDC Trust Policy Validation Rule (`scoped to all`)
+- **Error:** `Trust policy with trusted principal ... must evaluate ... token.actions.githubusercontent.com:sub ... which is not scoped to all`.
+- **Root Cause:** AWS IAM blocks saving an OIDC trust policy for GitHub if the `Condition` does not evaluate `sub` or `job_workflow_ref`, preventing wildcards like `*` that would allow arbitrary GitHub repositories to assume the role.
+- **Resolution:** Always include an explicit `Condition` evaluating `token.actions.githubusercontent.com:sub` scoped to the specific repository.
